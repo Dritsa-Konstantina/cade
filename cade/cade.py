@@ -14,8 +14,8 @@ class CADE:
     """
     Handles alignment between multiple slices of text
     """
-    def __init__(self, size=100, sg=0, siter=5, diter=5, ns=10, window=5, alpha=0.025,
-                            min_count=5, workers=2, test = "test", opath="model", init_mode="hidden"):
+    def __init__(self, size=100, sg=0, siter=5, diter=1, ns=10, window=5, alpha=0.025,
+                            min_count=5, workers=1, test = "test", opath="model", init_mode="hidden"):
         """
 
         :param size: Number of dimensions. Default is 100.
@@ -95,19 +95,20 @@ class CADE:
         else:
             return gensim.utils.RULE_DISCARD
 
-    def train_model(self, sentences):
+    def train_model(self, sentences, seed=1):
         model = None
         if self.compass == None or self.init_mode != "copy":
             model = gensim.models.word2vec.Word2Vec(sg=self.sg, size=self.size, alpha=self.static_alpha, iter=self.static_iter,
                              negative=self.negative,
-                             window=self.window, min_count=self.min_count, workers=self.workers)
+                             window=self.window, min_count=self.min_count, workers=self.workers,
+                                                    seed=seed)
             model.build_vocab(sentences, trim_rule=self.internal_trimming_rule if self.compass != None else None)
         if self.compass != None:
             model = self.initialize_from_compass(model)
         model.train(sentences, total_words=sum([len(s) for s in sentences]), epochs=model.iter, compute_loss=True)
         return model
 
-    def train_compass(self, compass_text, overwrite=False, save=False):
+    def train_compass(self, compass_text, overwrite=False, save=False, seed=1):
         compass_exists = os.path.isfile(os.path.join(self.opath, "compass.model"))
         if compass_exists and overwrite is False:
             print("Compass is being loaded from file.")
@@ -118,14 +119,14 @@ class CADE:
             print("Training the compass from scratch.")
             if compass_exists:
                 print("Current saved compass will be overwritten after training")
-            self.compass = self.train_model(sentences)
+            self.compass = self.train_model(sentences, seed=seed)
 
             if save:
                 self.compass.save(os.path.join(self.opath, "compass.model"))
 
         self.gvocab = self.compass.wv.vocab
 
-    def train_slice(self, slice_text, save=False):
+    def train_slice(self, slice_text, save=False, seed=1):
         """
         Training a slice of text
         :param slice_text:
@@ -137,7 +138,7 @@ class CADE:
         print("Training embeddings: slice {}.".format(slice_text))
 
         sentences = gensim.models.word2vec.LineSentence(slice_text)
-        model = self.train_model(sentences)
+        model = self.train_model(sentences, seed=seed)
 
         model_name = os.path.splitext(os.path.basename(slice_text))[0]
 
