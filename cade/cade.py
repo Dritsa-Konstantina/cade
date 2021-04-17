@@ -14,7 +14,7 @@ class CADE:
     """
     Handles alignment between multiple slices of text
     """
-    def __init__(self, size=100, sg=0, siter=5, diter=1, ns=10, window=5, alpha=0.025,
+    def __init__(self, size=100, sg=0, siter=5, diter=5, ns=10, window=5, alpha=0.025,
                             min_count=5, workers=1, test = "test", opath="model", init_mode="hidden"):
         """
 
